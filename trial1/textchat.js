@@ -35,7 +35,15 @@ sendMessage.addEventListener('click', () => {
     chatBox.appendChild(msgElem);
     chatBox.scrollTop = chatBox.scrollHeight;
     // Send to others
-    socket.emit('chat-message', { username, message });
+    socket.emit('chat-message', { name: username, message });
+
+    // Save to database
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: username, message })
+    });
+
     messageInput.value = '';
   }
 });
@@ -48,7 +56,7 @@ messageInput.addEventListener('keydown', (e) => {
 });
 
 // Receive message
-socket.on('chat-message', ({ username: sender, message }) => {
+socket.on('chat-message', ({ name: sender, message }) => {
   const msgElem = document.createElement('p');
   msgElem.innerHTML = `<span class="username">${sender}:</span> ${escapeHtml(message)}`;
   chatBox.appendChild(msgElem);

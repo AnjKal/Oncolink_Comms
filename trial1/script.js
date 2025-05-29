@@ -37,6 +37,27 @@ startBtn.onclick = async () => {
   await localConnection.setLocalDescription(offer);
 
   socket.emit('offer', { offer, username });
+
+  // Save voice call log to database
+  fetch('/api/calllog', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: username, timestamp: new Date().toISOString() })
+  });
+
+  // Save call log to database (start)
+  const startTime = new Date().toISOString();
+  window._callStartTime = startTime;
+  fetch('/api/call', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'voice',
+      participants: [username],
+      startTime,
+      endTime: startTime // Will update on hang up
+    })
+  });
 };
 
 sendBtn.onclick = () => {
@@ -49,6 +70,19 @@ sendBtn.onclick = () => {
 hangUpBtn.onclick = () => {
   localConnection.close();
   chatBox.innerHTML += "<p><i>Call ended</i></p>";
+
+  // Update call log with end time
+  const endTime = new Date().toISOString();
+  fetch('/api/call', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'voice',
+      participants: [username],
+      startTime: window._callStartTime,
+      endTime
+    })
+  });
 };
 
 // Handle Incoming Data Channel
@@ -103,3 +137,5 @@ socket.on('ice-candidate', async candidate => {
     await localConnection.addIceCandidate(candidate);
   }
 });
+
+// For video call, similar logic should be added in scr_video.js when a user joins

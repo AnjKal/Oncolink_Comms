@@ -10,6 +10,11 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream =>
 
   // Tell server you joined
   socket.emit('join-video-call', { username });
+  fetch('/api/videolog', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: username, timestamp: new Date().toISOString() })
+  });
 
   // Join video room
   socket.emit('join-video-stream', { username });

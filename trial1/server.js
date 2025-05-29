@@ -2,8 +2,11 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const mongoose = require('./db'); // Import MongoDB connection
+const { Chat, CallLog, VideoLog } = require('./models'); // Import models
 
 const app = express();
+app.use(express.json());
 const server = http.createServer(app);
 const io = socketIo(server);
 
@@ -36,9 +39,9 @@ io.on('connection', socket => {
   socket.on('ice-candidate', data => socket.broadcast.emit('ice-candidate', data));
 
   // Handle chat messages
-  socket.on('chat-message', ({ username, message }) => {
-    console.log(`Message from ${username}: ${message}`);
-    socket.broadcast.emit('chat-message', { username, message });
+  socket.on('chat-message', ({ name, message }) => {
+    console.log(`Message from ${name}: ${message}`);
+    socket.broadcast.emit('chat-message', { name, message });
   });
 
   // Handle video stream joining
@@ -90,5 +93,71 @@ io.on('connection', socket => {
   });
 });
 
+// API endpoint to save a chat message
+app.post('/api/chat', async (req, res) => {
+  console.log('POST /api/chat called with body:', req.body); // Debug log
+  try {
+    const { name, message } = req.body;
+    if (!name || !message) {
+      console.log('Missing name or message'); // Debug log
+      return res.status(400).json({ error: 'name and message are required' });
+    }
+    const chat = new Chat({ name, message });
+    await chat.save();
+    console.log('Chat saved:', chat); // Debug log
+    res.status(201).json({ success: true, chat });
+  } catch (err) {
+    console.error('Error saving chat:', err); // Debug log
+    res.status(500).json({ error: 'Failed to save chat message' });
+  }
+});
+
+// API endpoint to save a call log (voice or video)
+app.post('/api/call', async (req, res) => {
+  try {
+    const { type, participants, startTime, endTime } = req.body;
+    if (!type || !participants || !startTime || !endTime) {
+      return res.status(400).json({ error: 'type, participants, startTime, and endTime are required' });
+    }
+    const callLog = new CallLog({ type, participants, startTime, endTime });
+    await callLog.save();
+    res.status(201).json({ success: true, callLog });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save call log' });
+  }
+});
+
+// API endpoint to save a voice call log
+app.post('/api/calllog', async (req, res) => {
+  try {
+    const { name, timestamp } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+    const callLog = new CallLog({ name, timestamp: timestamp ? new Date(timestamp) : undefined });
+    await callLog.save();
+    res.status(201).json({ success: true, callLog });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save call log' });
+  }
+});
+
+// API endpoint to save a video call log
+app.post('/api/videolog', async (req, res) => {
+  try {
+    const { name, timestamp } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+    const videoLog = new VideoLog({ name, timestamp: timestamp ? new Date(timestamp) : undefined });
+    await videoLog.save();
+    res.status(201).json({ success: true, videoLog });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save video log' });
+  }
+});
+
 // Start the server
-server.listen(3000, () => console.log('Server running on http://localhost:3000'));
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
