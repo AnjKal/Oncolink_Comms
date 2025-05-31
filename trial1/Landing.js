@@ -2,7 +2,7 @@ import React from 'react';
 
 const Landing = () => {
   const handleNavigation = (file) => {
-    window.location.href = `/${file}`;
+    window.location.href = file;
   };
 
   return (
@@ -26,6 +26,13 @@ const Landing = () => {
           style={{ margin: '10px', padding: '10px 20px', fontSize: '16px' }}
         >
           Voice Call
+        </button>
+
+        <button
+          onClick={() => handleNavigation('talk_to_doctor.html')}
+          style={{ margin: '10px', padding: '10px 20px', fontSize: '16px' }}
+        >
+          Talk to Your Doctor
         </button>
       </div>
     </div>

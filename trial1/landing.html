@@ -82,27 +82,34 @@
   </div>
 
   <script>
-    // Check if user is logged in
+    // Check if user exists in localStorage
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) {
-      window.location.href = '/';
-    } else {
-      // Pre-fill username if available
-      document.getElementById('username').value = user.username || '';
+    // if (!user) {
+    //   window.location.href = '/';
+    // } else {
+    //   // Pre-fill username if available
+    //   document.getElementById('username').value = user.username || '';
+    // }
+    if (user && user.username) {
+      document.getElementById('username').value = user.username;
     }
 
     function navigateTo(file) {
       const username = document.getElementById('username').value.trim();
-      if (!username) {
+      // Only require username for chat/video/voice pages, not for talk_to_doctor
+      if (!username && !file.includes('talk_to_doctor')) {
         alert('Please enter your name to continue');
         return;
       }
-      // Update username in localStorage
-      const user = JSON.parse(localStorage.getItem('user')) || {};
-      user.username = username;
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      window.location.href = `${file}?username=${encodeURIComponent(username)}`;
+      // Update username in localStorage if provided
+      if (username) {
+        const user = JSON.parse(localStorage.getItem('user')) || {};
+        user.username = username;
+        localStorage.setItem('user', JSON.stringify(user));
+        window.location.href = `${file}?username=${encodeURIComponent(username)}`;
+      } else {
+        window.location.href = file;
+      }
     }
 
     function logout() {
