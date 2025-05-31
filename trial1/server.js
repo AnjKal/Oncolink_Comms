@@ -3,17 +3,37 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const mongoose = require('./db'); // Import MongoDB connection
-const { Chat, CallLog, VideoLog } = require('./models'); // Import models
+const { Chat, CallLog, VideoLog, User } = require('./models'); // Import models
 
 const app = express();
 app.use(express.json());
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Serve the current directory for static files
+// Serve new HTML files
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+app.get('/doctor_dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'doctor_dashboard.html'));
+});
+app.get('/talk_to_doctor.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'talk_to_doctor.html'));
+});
+app.get('/view_files.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'view_files.html'));
+});
+app.get('/view_queries.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'view_queries.html'));
+});
+app.get('/view_appointments.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'view_appointments.html'));
+});
+
+// Serve static files from the current directory
 app.use(express.static(__dirname));
 
-// Serve landing.html as the default page
+// Serve landing page as root
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'landing.html'));
 });

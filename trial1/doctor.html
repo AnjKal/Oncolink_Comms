@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard</title>
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+  <div class="landing-container">
+    <h1>Doctor Dashboard</h1>
+    <div class="file-sharing-container">
+      <h2 id="welcome-message">Welcome, Doctor!</h2>
+      <button onclick="navigateTo('filesharing.html')">File Sharing</button>
+    </div>
+    <script>
+      // Get username from URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const username = urlParams.get('username');
+      if (username) {
+        document.getElementById('welcome-message').textContent = `Welcome, ${username}!`;
+      }
+    </script>
+  </div>
+  <script>
+    function navigateTo(file) {
+      const username = new URLSearchParams(window.location.search).get('username');
+      if (!username) {
+        alert('No username found!');
+        return;
+      }
+      window.location.href = `${file}?username=${encodeURIComponent(username)}`;
+    }
+  </script>
+</body>
+</html>

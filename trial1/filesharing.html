@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Sharing Login</title>
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+  <div class="landing-container">
+    <h1>File Sharing Login</h1>
+    <div class="login-form">
+      <input type="email" id="email" placeholder="Enter your email" required />
+      <input type="password" id="password" placeholder="Enter your password" required />
+      <button onclick="login()">Login</button>
+    </div>
+  </div>
+  <script>
+    async function login() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const username = new URLSearchParams(window.location.search).get('username');
+
+      if (!email || !password) {
+        alert('Please enter both email and password!');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password, username })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          if (data.role === 'doctor') {
+            window.location.href = 'doctor.html?username=' + encodeURIComponent(username);
+          } else {
+            window.location.href = 'patient.html?username=' + encodeURIComponent(username);
+          }
+        } else {
+          alert('Invalid credentials!');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>
