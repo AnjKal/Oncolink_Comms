@@ -42,60 +42,39 @@
   </div>
 
   <script>
-    const sampleCredentials = {
-      doctors: [
-        {
-          email: "doctor1@example.com",
-          password: "doctor123",
-          role: "doctor",
-          username: "Dr. Smith"
-        },
-        {
-          email: "doctor2@example.com",
-          password: "doctor456",
-          role: "doctor",
-          username: "Dr. Johnson"
-        }
-      ],
-      patients: [
-        {
-          email: "patient1@example.com",
-          password: "patient123",
-          role: "patient",
-          username: "John Doe"
-        },
-        {
-          email: "patient2@example.com",
-          password: "patient456",
-          role: "patient",
-          username: "Jane Smith"
-        }
-      ]
-    };
-
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+      const errorElement = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password })
+        });
 
-      // Find matching credentials
-      const user = [...sampleCredentials.doctors, ...sampleCredentials.patients]
-        .find(u => u.email === email && u.password === password);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
 
-      if (!user) {
-        document.getElementById('error-message').textContent = 'Invalid credentials!';
-        document.getElementById('error-message').classList.remove('d-none');
-        return;
-      }
+        // Store user data in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Store login state
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Redirect based on role
-      if (user.role === 'doctor') {
-        window.location.href = 'doctor_dashboard.html';
-      } else {
-        window.location.href = 'landing.html';
+        // Redirect based on role
+        if (data.user.role === 'doctor') {
+          window.location.href = 'doctor_dashboard.html';
+        } else {
+          window.location.href = 'landing.html';
+        }
+      } catch (error) {
+        errorElement.textContent = error.message || 'Login failed. Please try again.';
+        errorElement.classList.remove('d-none');
       }
     });
 

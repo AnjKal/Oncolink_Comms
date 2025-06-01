@@ -33,8 +33,68 @@ app.get('/view_appointments.html', (req, res) => {
 // Serve static files from the current directory
 app.use(express.static(__dirname));
 
-// Serve landing page as root
+// Serve login page as root
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// Login endpoint
+app.post('/api/login', express.json(), (req, res) => {
+  const { email, password } = req.body;
+  
+  // Sample credentials (in a real app, this would query a database)
+  const sampleCredentials = {
+    doctors: [
+      {
+        email: "doctor1@example.com",
+        password: "doctor123",
+        role: "doctor",
+        username: "Dr. Smith"
+      },
+      {
+        email: "doctor2@example.com",
+        password: "doctor456",
+        role: "doctor",
+        username: "Dr. Johnson"
+      }
+    ],
+    patients: [
+      {
+        email: "patient1@example.com",
+        password: "patient123",
+        role: "patient",
+        username: "John Doe"
+      },
+      {
+        email: "patient2@example.com",
+        password: "patient456",
+        role: "patient",
+        username: "Jane Smith"
+      }
+    ]
+  };
+
+  // Find matching user
+  const user = [...sampleCredentials.doctors, ...sampleCredentials.patients]
+    .find(u => u.email === email && u.password === password);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  // Return user data (in a real app, you'd generate a session token)
+  res.json({
+    success: true,
+    user: {
+      username: user.username,
+      role: user.role,
+      email: user.email
+    }
+  });
+});
+
+// Serve landing page (this is now protected by client-side auth)
+app.get('/landing.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'landing.html'));
 });
 

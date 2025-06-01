@@ -1,0 +1,159 @@
+TECHNICAL DOCUMENTATION: SECURE MEDICAL COMMUNICATION SYSTEM
+=========================================================
+
+1. SYSTEM OVERVIEW
+-----------------
+The Secure Medical Communication System is a comprehensive telemedicine platform designed to facilitate secure communication between patients and healthcare providers. The system implements a client-server architecture with real-time communication capabilities, secure authentication, and role-based access control.
+
+2. TECHNICAL ARCHITECTURE
+------------------------
+2.1 Frontend Components:
+- Built with HTML5, CSS3, and JavaScript (ES6+)
+- Responsive design using Bootstrap 5 framework
+- Real-time updates using Socket.IO client library
+- Form validation and user feedback mechanisms
+
+2.2 Backend Components:
+- Node.js runtime environment
+- Express.js web application framework
+- MongoDB database with Mongoose ODM
+- Socket.IO for real-time bidirectional communication
+- JWT (JSON Web Tokens) for authentication
+
+3. DETAILED NETWORK COMMUNICATION
+--------------------------------
+3.1 Authentication Flow:
+1. Client sends HTTPS POST request to /api/login with credentials
+2. Server validates credentials against database
+3. On success, server generates JWT token and sends it to client
+4. Client stores token in secure HTTP-only cookie
+5. Subsequent requests include token in Authorization header
+
+3.2 Real-time Communication:
+- WebSocket connection established after successful authentication
+- Room-based architecture for private conversations
+- Event-driven communication model
+- Automatic reconnection on network failure
+
+4. SECURITY IMPLEMENTATION
+-------------------------
+4.1 Data Protection:
+- All sensitive data encrypted in transit (TLS 1.3)
+- Password hashing using bcrypt
+- Input validation and sanitization
+- CSRF protection
+
+4.2 Access Control:
+- Role-based access control (RBAC)
+- Patient and Doctor roles with different permissions
+- Session timeout and automatic logout
+- Rate limiting on authentication endpoints
+
+5. DATABASE SCHEMA
+-----------------
+5.1 User Collection:
+{
+  _id: ObjectId,
+  email: String (unique, required),
+  password: String (hashed, required),
+  role: String (enum: ['patient', 'doctor'], required),
+  username: String (required),
+  createdAt: Date,
+  updatedAt: Date
+}
+
+5.2 Chat Messages Collection:
+{
+  _id: ObjectId,
+  roomId: String (required),
+  senderId: ObjectId (ref: 'User'),
+  message: String (required),
+  timestamp: Date (default: Date.now)
+}
+
+6. API ENDPOINTS
+---------------
+6.1 Authentication:
+POST /api/login - User authentication
+POST /api/logout - Terminate user session
+
+6.2 User Management:
+GET /api/users/me - Get current user profile
+PUT /api/users/me - Update user profile
+
+6.3 Messaging:
+GET /api/messages/:roomId - Get message history
+POST /api/messages - Send new message
+
+7. REAL-TIME EVENTS
+------------------
+7.1 Client-to-Server:
+- 'join-room': Join a chat room
+- 'send-message': Send message to room
+- 'typing': Notify others user is typing
+
+7.2 Server-to-Client:
+- 'message-received': New message notification
+- 'user-joined': User joined the room
+- 'user-left': User left the room
+
+8. ERROR HANDLING
+----------------
+- Standardized error responses
+- HTTP status codes
+- Detailed error messages in development
+- Logging of server errors
+
+9. PERFORMANCE OPTIMIZATIONS
+---------------------------
+- Connection pooling for database
+- Caching of frequently accessed data
+- Compression of HTTP responses
+- Lazy loading of non-critical resources
+
+10. DEPLOYMENT CONFIGURATION
+---------------------------
+10.1 Environment Variables:
+- NODE_ENV=production
+- MONGODB_URI=your_mongodb_uri
+- JWT_SECRET=your_jwt_secret
+- PORT=3000
+
+10.2 Dependencies:
+- Node.js v14+
+- MongoDB 4.4+
+- npm packages: express, socket.io, mongoose, bcryptjs, jsonwebtoken, etc.
+
+11. MAINTENANCE AND MONITORING
+-----------------------------
+- Health check endpoints
+- Performance monitoring
+- Error tracking
+- Regular security audits
+
+12. TROUBLESHOOTING
+------------------
+12.1 Common Issues:
+- Connection timeouts: Check network connectivity
+- Authentication failures: Verify JWT token
+- Database connection issues: Check MongoDB service
+
+12.2 Logs:
+- Access logs
+- Error logs
+- Debug logs (when NODE_ENV=development)
+
+13. FUTURE ENHANCEMENTS
+----------------------
+- Push notifications
+- File sharing capabilities
+- Video consultation
+- Integration with EHR systems
+- Multi-language support
+
+14. CONTACT INFORMATION
+----------------------
+For technical support or inquiries, please contact:
+[Your Contact Information]
+
+Last Updated: May 31, 2025
