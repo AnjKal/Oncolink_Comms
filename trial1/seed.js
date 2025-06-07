@@ -1,7 +1,13 @@
 require('dotenv').config();
-const mongoose = require('./db');
+const { mongoose, connectDB } = require('./db');
 const { User, File, Appointment, Query } = require('./models');
 const bcrypt = require('bcryptjs');
+
+// Connect to database before seeding
+connectDB().catch(err => {
+  console.error('Failed to connect to MongoDB:', err);
+  process.exit(1);
+});
 
 const seedDatabase = async () => {
   try {

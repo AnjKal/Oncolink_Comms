@@ -42,6 +42,12 @@
   </div>
 
   <script>
+    // Check for logout parameter and clear localStorage if present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('logout') === 'true') {
+      localStorage.removeItem('user');
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;

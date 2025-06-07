@@ -2,13 +2,26 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
-const mongoose = require('./db'); // Import MongoDB connection
-const { Chat, CallLog, VideoLog, User } = require('./models'); // Import models
+// Load environment variables first
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
 const server = http.createServer(app);
 const io = socketIo(server);
+
+// Import database connection and models
+const { mongoose, connectDB } = require('./db');
+const { Chat, CallLog, VideoLog, User } = require('./models');
+
+// Connect to MongoDB
+connectDB().then(() => {
+  console.log('Successfully connected to MongoDB');
+}).catch(err => {
+  console.error('Failed to connect to MongoDB:', err);
+  process.exit(1);
+});
+
+app.use(express.json());
 
 // Serve new HTML files
 app.get('/login.html', (req, res) => {

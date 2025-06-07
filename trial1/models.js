@@ -1,7 +1,12 @@
 // models.js
 // Defines and exports Mongoose models for chat messages, call logs, and users
 
-const mongoose = require('./db');
+// Import mongoose from db.js
+const { mongoose } = require('./db');
+if (!mongoose) {
+  console.error('Mongoose not properly imported from db.js');
+  process.exit(1);
+}
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
