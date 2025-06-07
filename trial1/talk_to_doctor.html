@@ -144,10 +144,48 @@
     });
 
     // Appointment form submission
-    document.getElementById('appointmentForm').addEventListener('submit', (e) => {
+    document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      alert('Appointment booked successfully!');
-      // In a real app, this would send the data to the server
+      
+      // Get the current user from localStorage
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user) {
+        alert('Please log in to book an appointment');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const doctorEmail = document.getElementById('doctor').value + '@example.com';
+      const date = document.getElementById('date').value;
+      const time = document.getElementById('time').value;
+      
+      try {
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            patientEmail: user.email,
+            doctorEmail: doctorEmail,
+            date: date,
+            time: time,
+            notes: 'Appointment requested by patient'
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Appointment booked successfully!');
+          document.getElementById('appointmentForm').reset();
+        } else {
+          alert('Failed to book appointment: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error booking appointment:', error);
+        alert('Failed to book appointment. Please try again.');
+      }
     });
 
     // Query form submission

@@ -11,7 +11,7 @@ const io = socketIo(server);
 
 // Import database connection and models
 const { mongoose, connectDB } = require('./db');
-const { Chat, CallLog, VideoLog, User } = require('./models');
+const { Chat, CallLog, VideoLog, User, File, Appointment, Query } = require('./models');
 
 // Connect to MongoDB
 connectDB().then(() => {
@@ -250,7 +250,228 @@ app.post('/api/videolog', async (req, res) => {
   }
 });
 
+// --- Appointments API ---
+app.get('/api/appointments', async (req, res) => {
+  try {
+    const { doctorEmail, patientEmail, status } = req.query;
+    const filter = {};
+    if (doctorEmail) filter.doctorEmail = doctorEmail;
+    if (patientEmail) filter.patientEmail = patientEmail;
+    if (status) filter.status = status;
+    
+    const appointments = await Appointment.find(filter).sort({ date: 1, time: 1 });
+    res.json({ success: true, appointments });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch appointments' });
+  }
+});
+
+app.post('/api/appointments', async (req, res) => {
+  try {
+    const { patientEmail, doctorEmail, date, time, notes } = req.body;
+    if (!patientEmail || !doctorEmail || !date || !time) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const appointment = new Appointment({
+      patientEmail,
+      doctorEmail,
+      date: new Date(date),
+      time,
+      notes,
+      status: 'pending'
+    });
+    
+    await appointment.save();
+    res.status(201).json({ success: true, appointment });
+  } catch (err) {
+    console.error('Error creating appointment:', err);
+    res.status(500).json({ error: 'Failed to create appointment' });
+  }
+});
+
+// Update appointment status
+app.patch('/api/appointments/:id', async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const { id } = req.params;
+    
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+    
+    const updateData = { status };
+    if (notes) updateData.notes = notes;
+    
+    const appointment = await Appointment.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    
+    res.json({ success: true, appointment });
+  } catch (err) {
+    console.error('Error updating appointment:', err);
+    res.status(500).json({ error: 'Failed to update appointment' });
+  }
+});
+
+// --- Queries API ---
+app.get('/api/queries', async (req, res) => {
+  try {
+    const { to, from, status } = req.query;
+    const filter = {};
+    if (to) filter.to = to;
+    if (from) filter.from = from;
+    if (status) filter.status = status;
+    
+    const queries = await Query.find(filter).sort({ createdAt: -1 });
+    res.json({ success: true, queries });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch queries' });
+  }
+});
+
+app.post('/api/queries', async (req, res) => {
+  try {
+    const { from, to, message } = req.body;
+    if (!from || !to || !message) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const query = new Query({
+      from,
+      to,
+      message,
+      status: 'unread'
+    });
+    
+    await query.save();
+    res.status(201).json({ success: true, query });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create query' });
+  }
+});
+
+// --- Files API ---
+app.get('/api/files', async (req, res) => {
+  try {
+    const { patientEmail, doctorEmail, status } = req.query;
+    const filter = {};
+    if (patientEmail) filter.patientEmail = patientEmail;
+    if (doctorEmail) filter.doctorEmail = doctorEmail;
+    if (status) filter.status = status;
+    
+    const files = await File.find(filter).sort({ uploadDate: -1 });
+    res.json({ success: true, files });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch files' });
+  }
+});
+
+// Note: File upload would typically use multer middleware for handling file uploads
+// This is a simplified version
+app.post('/api/files', async (req, res) => {
+  try {
+    // In a real app, you would use multer to handle file uploads
+    // This is a simplified version that expects file data in the request body
+    const { patientEmail, doctorEmail, filename, fileData, fileType, size } = req.body;
+    
+    if (!patientEmail || !doctorEmail || !filename || !fileData || !fileType || !size) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const file = new File({
+      patientEmail,
+      doctorEmail,
+      filename,
+      fileData: Buffer.from(fileData, 'base64'), // Convert base64 to buffer
+      fileType,
+      size: parseInt(size, 10),
+      status: 'uploaded'
+    });
+    
+    await file.save();
+    res.status(201).json({ success: true, file });
+  } catch (err) {
+    console.error('Error saving file:', err);
+    res.status(500).json({ error: 'Failed to upload file' });
+  }
+});
+
+// --- Users API ---
+app.get('/api/users', async (req, res) => {
+  try {
+    const { role, email } = req.query;
+    const filter = {};
+    if (role) filter.role = role;
+    if (email) filter.email = email;
+    
+    const users = await User.find(filter, { password: 0 }); // Exclude passwords
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Update WebSocket handlers to save data to database
+io.on('connection', socket => {
+  console.log('A user connected');
+
+  // Existing WebSocket handlers...
+  // ...
+  
+  // Handle chat messages - Update to save to database
+  socket.on('chat-message', async ({ name, message }) => {
+    console.log(`Message from ${name}: ${message}`);
+    try {
+      const chat = new Chat({ name, message });
+      await chat.save();
+      socket.broadcast.emit('chat-message', { name, message });
+    } catch (err) {
+      console.error('Error saving chat message:', err);
+    }
+  });
+  
+  // Handle call start/end events
+  socket.on('call-started', async ({ type, participants, startTime }) => {
+    try {
+      const callLog = new CallLog({
+        type,
+        participants,
+        startTime: new Date(startTime),
+        status: 'in-progress'
+      });
+      await callLog.save();
+      // Store the call ID to update it when the call ends
+      socket.callLogId = callLog._id;
+    } catch (err) {
+      console.error('Error saving call log:', err);
+    }
+  });
+  
+  socket.on('call-ended', async ({ endTime }) => {
+    if (socket.callLogId) {
+      try {
+        await CallLog.findByIdAndUpdate(socket.callLogId, {
+          endTime: new Date(endTime),
+          status: 'completed'
+        });
+      } catch (err) {
+        console.error('Error updating call log:', err);
+      }
+    }
+  });
+  
+  // Rest of the existing WebSocket handlers...
+});
+
 // Start the server
-server.listen(3000, () => {
-  console.log('Server running on port 3000');
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
