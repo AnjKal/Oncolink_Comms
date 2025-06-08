@@ -1,107 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patient Dashboard - Medical Communication App</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Patient Dashboard - ConnectX</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
   <style>
-    .landing-container {
-      max-width: 800px;
-      margin: 50px auto;
-      padding: 30px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      text-align: center;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .landing-buttons {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-    .landing-buttons button {
-      padding: 15px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      background: #0d6efd;
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top left, #1f1c2c, #24182f, #120d1c);
       color: white;
-      cursor: pointer;
-      transition: all 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+      text-align: center;
+      padding: 20px;
     }
-    .landing-buttons button:hover {
-      background: #0b5ed7;
-      transform: translateY(-2px);
+    .stars, .glow {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
     }
-    .username-input {
-      margin: 20px 0;
+    .stars {
+      background: url('https://assets.codepen.io/13471/stars.svg');
+      background-size: cover;
+      opacity: 0.08;
+      animation: twinkle 20s infinite linear;
     }
-    .username-input input {
-      padding: 10px;
+    .glow {
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: pulse 8s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0% { background-position: 0 0; }
+      100% { background-position: 100% 100%; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.05; }
+      50% { opacity: 0.12; }
+    }
+    .dashboard {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+      max-width: 700px;
+      width: 100%;
+      z-index: 1;
+      animation: fadeIn 1.5s ease-out;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #ff6ec4, #7873f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 10px rgba(255,255,255,0.15);
+    }
+    .lead {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      color: rgba(255,255,255,0.8);
+    }
+    input {
+      padding: 14px 20px;
       width: 100%;
       max-width: 400px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 16px;
+      border-radius: 50px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      margin: 0 auto 30px;
+      transition: 0.3s ease;
+    }
+    input:focus {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255,255,255,0.3);
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .button-group button {
+      padding: 14px 25px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      color: #222;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 10px 25px rgba(255, 105, 180, 0.3);
+      min-width: 180px;
+    }
+    .button-group button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 15px 30px rgba(255, 105, 180, 0.4);
+    }
+    .logout-btn {
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.8);
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: white;
+    }
+    footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.4);
+      z-index: 1;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
-<body class="bg-light">
-  <div class="container">
-    <div class="landing-container">
-      <h1 class="mb-4">Welcome to Patient Portal</h1>
-      <p class="lead mb-4">Please enter your name to continue</p>
-      
-      <div class="username-input">
-        <input type="text" id="username" class="form-control mx-auto" placeholder="Enter your name" />
-      </div>
-      
-      <div class="landing-buttons">
-        <button onclick="navigateTo('textchat.html')" class="btn btn-primary">
-          <i class="bi bi-chat-dots"></i> Text Chat
-        </button>
-        <button onclick="navigateTo('videochat.html')" class="btn btn-primary">
-          <i class="bi bi-camera-video"></i> Video Chat
-        </button>
-        <button onclick="navigateTo('voicecall.html')" class="btn btn-primary">
-          <i class="bi bi-telephone"></i> Voice Call
-        </button>
-        <button onclick="navigateTo('talk_to_doctor.html')" class="btn btn-success">
-          <i class="bi bi-heart-pulse"></i> Talk to Your Doctor
-        </button>
-      </div>
-      
-      <div class="mt-4">
-        <button onclick="logout()" class="btn btn-outline-secondary">
-          <i class="bi bi-box-arrow-left"></i> Logout
-        </button>
-      </div>
+<body>
+  <div class="stars"></div>
+  <div class="glow"></div>
+  <div class="dashboard">
+    <h1>Welcome to ConnectX</h1>
+    <p class="lead">Please enter your name to continue</p>
+    <input type="text" id="username" placeholder="Enter your name" />
+
+    <div class="button-group">
+      <button onclick="navigateTo('textchat.html')"><i class="bi bi-chat-dots"></i> Text Chat</button>
+      <button onclick="navigateTo('videochat.html')"><i class="bi bi-camera-video"></i> Video Chat</button>
+      <button onclick="navigateTo('voicecall.html')"><i class="bi bi-telephone"></i> Voice Call</button>
+      <button onclick="navigateTo('talk_to_doctor.html')"><i class="bi bi-heart-pulse"></i> Talk to Your Doctor</button>
     </div>
+
+    <button onclick="logout()" class="logout-btn"><i class="bi bi-box-arrow-left"></i> Logout</button>
   </div>
 
+  <footer>© 2025 ConnectX. Crafted with ❤️ for patient-first healthcare.</footer>
+
   <script>
-    // Check if user exists in localStorage
     const user = JSON.parse(localStorage.getItem('user'));
-    // if (!user) {
-    //   window.location.href = '/';
-    // } else {
-    //   // Pre-fill username if available
-    //   document.getElementById('username').value = user.username || '';
-    // }
     if (user && user.username) {
       document.getElementById('username').value = user.username;
     }
 
     function navigateTo(file) {
       const username = document.getElementById('username').value.trim();
-      // Only require username for chat/video/voice pages, not for talk_to_doctor
       if (!username && !file.includes('talk_to_doctor')) {
         alert('Please enter your name to continue');
         return;
       }
-      // Update username in localStorage if provided
       if (username) {
         const user = JSON.parse(localStorage.getItem('user')) || {};
         user.username = username;
@@ -117,10 +191,5 @@
       window.location.href = '/';
     }
   </script>
-  
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-  <!-- Bootstrap JS Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

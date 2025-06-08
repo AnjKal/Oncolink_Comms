@@ -34,7 +34,10 @@ const Landing = () => {
         >
           Talk to Your Doctor
         </button>
+        
       </div>
+
+      
     </div>
   );
 };

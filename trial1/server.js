@@ -16,6 +16,7 @@ const upload = multer({
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const userPublicKeys = new Map();
 
 // Import database connection and models
 const { mongoose, connectDB } = require('./db');
@@ -131,6 +132,13 @@ const textChatParticipants = new Map();
 
 // WebSocket connection handling
 io.on('connection', socket => {
+
+  socket.on('public-key', ({ username, key }) => {
+  userPublicKeys.set(username, key);
+
+  // Send all public keys to all users
+  io.emit('public-keys', Object.fromEntries(userPublicKeys));
+});
   console.log('A user connected');
 
   // Notify other users when a new user joins
@@ -144,10 +152,10 @@ io.on('connection', socket => {
   socket.on('ice-candidate', data => socket.broadcast.emit('ice-candidate', data));
 
   // Handle chat messages
-  socket.on('chat-message', ({ name, message }) => {
-    console.log(`Message from ${name}: ${message}`);
-    socket.broadcast.emit('chat-message', { name, message });
-  });
+  socket.on('chat-message', ({ from, to, message }) => {
+  console.log(`Encrypted message from ${from} to ${to}:`, message);
+  io.emit('chat-message', { from, to, message }); // 🔁 Must include 'to'!
+});
 
   // Handle video stream joining
   socket.on('join-video-stream', ({ username }) => {
