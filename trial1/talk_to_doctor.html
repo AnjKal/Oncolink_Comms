@@ -39,16 +39,53 @@
 </head>
 <body>
   <div class="container dashboard-container">
+    <!-- File Upload Section -->
     <div class="section-card">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">Share Your Files with Doctor</h5>
-          <div class="file-upload" id="uploadArea">
-            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
-            <p>Drag & drop files here or click to browse</p>
-            <input type="file" id="fileInput" multiple style="display: none;">
+          <h3 class="card-title mb-4">Upload Medical Documents</h3>
+          
+          <!-- Upload Form -->
+          <div class="mb-4">
+            <form id="fileUploadForm">
+              <div class="mb-3">
+                <label for="doctorSelect" class="form-label">Share with Doctor</label>
+                <select class="form-select" id="doctorSelect" required>
+                  <option value="">Select a doctor...</option>
+                  <option value="dr.smith@example.com">Dr. Smith</option>
+                  <option value="dr.johnson@example.com">Dr. Johnson</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="fileInput" class="form-label">Select File (PDF, JPG, PNG, DOC, DOCX)</label>
+                <input class="form-control" type="file" id="fileInput" required>
+                <div class="form-text">Max file size: 10MB</div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="fileDescription" class="form-label">Description (Optional)</label>
+                <textarea class="form-control" id="fileDescription" rows="2" placeholder="Brief description of the document"></textarea>
+              </div>
+              
+              <button type="submit" class="btn btn-primary" id="uploadBtn">
+                <span class="spinner-border spinner-border-sm d-none" id="uploadSpinner"></span>
+                Upload File
+              </button>
+              <div id="uploadStatus" class="mt-2"></div>
+            </form>
           </div>
-          <div class="file-preview" id="filePreview"></div>
+          
+          <!-- File List -->
+          <div>
+            <h5 class="mb-3">Your Uploaded Files</h5>
+            <div id="fileList" class="list-group">
+              <!-- Files will be listed here -->
+              <div class="text-muted text-center py-3" id="noFilesMessage">
+                No files uploaded yet. Upload your first document above.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -115,10 +152,248 @@
   </div>
 
   <script>
-    // File upload functionality
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('fileInput');
-    const filePreview = document.getElementById('filePreview');
+    // Check if user is logged in
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user) {
+        alert('Please log in to access this page');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Load user's files
+      loadUserFiles(user.email);
+    });
+    
+    // File upload form submission
+    document.getElementById('fileUploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const fileInput = document.getElementById('fileInput');
+      const doctorEmail = document.getElementById('doctorSelect').value;
+      const description = document.getElementById('fileDescription').value;
+      const uploadBtn = document.getElementById('uploadBtn');
+      const spinner = document.getElementById('uploadSpinner');
+      const statusDiv = document.getElementById('uploadStatus');
+      const user = JSON.parse(localStorage.getItem('user'));
+      
+      if (!fileInput.files.length) {
+        showAlert('Please select a file to upload', 'danger');
+        return;
+      }
+      
+      if (!doctorEmail) {
+        showAlert('Please select a doctor', 'danger');
+        return;
+      }
+      
+      if (!user || !user.email) {
+        showAlert('Please log in to upload files', 'danger');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('patientEmail', user.email);
+      formData.append('doctorEmail', doctorEmail);
+      if (description) formData.append('description', description);
+      
+      try {
+        // Show loading state
+        uploadBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        statusDiv.innerHTML = '';
+        
+        console.log('Uploading file to server...');
+        const response = await fetch('/api/files', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        console.log('Upload response:', result);
+        
+        if (!response.ok) {
+          throw new Error(result.error || result.message || 'Failed to upload file');
+        }
+        
+        if (result.success && result.file) {
+          // Show success message
+          showAlert('File uploaded successfully!', 'success');
+          
+          // Reset form
+          fileInput.value = '';
+          document.getElementById('fileDescription').value = '';
+          
+          // Refresh file list
+          await loadUserFiles(user.email);
+        } else {
+          throw new Error('Unexpected response from server');
+        }
+      } catch (err) {
+        console.error('Error uploading file:', err);
+        showAlert('An error occurred while uploading the file', 'danger');
+      } finally {
+        uploadBtn.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    });
+    
+    // Load user's uploaded files
+    async function loadUserFiles(patientEmail) {
+      try {
+        const response = await fetch(`/api/files/patient/${encodeURIComponent(patientEmail)}`);
+        const result = await response.json();
+        
+        if (response.ok) {
+          renderFileList(result.files || []);
+        } else {
+          throw new Error(result.error || 'Failed to load files');
+        }
+      } catch (err) {
+        console.error('Error loading files:', err);
+        showAlert('Failed to load your files. Please try again later.', 'danger');
+      }
+    }
+    
+    // Render file list
+    function renderFileList(files) {
+      const fileList = document.getElementById('fileList');
+      const noFilesMessage = document.getElementById('noFilesMessage');
+      
+      if (!files || files.length === 0) {
+        noFilesMessage.classList.remove('d-none');
+        fileList.innerHTML = '';
+        fileList.appendChild(noFilesMessage);
+        return;
+      }
+      
+      noFilesMessage.classList.add('d-none');
+      fileList.innerHTML = '';
+      
+      // Sort files by upload date (newest first)
+      const sortedFiles = [...files].sort((a, b) => {
+        return new Date(b.uploadDate) - new Date(a.uploadDate);
+      });
+      
+      sortedFiles.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'list-group-item d-flex justify-content-between align-items-start';
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'd-flex flex-column w-100';
+        
+        // File name and icon
+        const fileHeader = document.createElement('div');
+        fileHeader.className = 'd-flex align-items-center mb-1';
+        
+        const icon = document.createElement('i');
+        icon.className = `${getFileIconClass(file.format)} me-2`;
+        
+        const fileName = document.createElement('span');
+        fileName.className = 'fw-bold';
+        fileName.textContent = file.filename || 'Unnamed file';
+        
+        fileHeader.appendChild(icon);
+        fileHeader.appendChild(fileName);
+        
+        // File metadata
+        const fileMeta = document.createElement('div');
+        fileMeta.className = 'ms-4';
+        
+        if (file.description) {
+          const desc = document.createElement('div');
+          desc.className = 'text-muted mb-1';
+          desc.textContent = file.description;
+          fileMeta.appendChild(desc);
+        }
+        
+        const metaInfo = document.createElement('div');
+        metaInfo.className = 'd-flex flex-wrap text-muted small';
+        
+        const sizeInfo = document.createElement('span');
+        sizeInfo.className = 'me-3';
+        sizeInfo.innerHTML = `<i class="fas fa-hdd me-1"></i> ${formatFileSize(file.size)}`;
+        
+        const dateInfo = document.createElement('span');
+        dateInfo.className = 'me-3';
+        const uploadDate = file.uploadDate ? new Date(file.uploadDate) : new Date();
+        dateInfo.innerHTML = `<i class="far fa-calendar-alt me-1"></i> ${uploadDate.toLocaleDateString()}`;
+        
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `badge ${getStatusBadgeClass(file.status)}`;
+        statusBadge.textContent = file.status || 'unknown';
+        
+        metaInfo.appendChild(sizeInfo);
+        metaInfo.appendChild(dateInfo);
+        metaInfo.appendChild(statusBadge);
+        
+        fileMeta.appendChild(metaInfo);
+        
+        // File actions
+        const fileActions = document.createElement('div');
+        fileActions.className = 'btn-group btn-group-sm mt-2 mt-md-0';
+        
+        const viewBtn = document.createElement('a');
+        viewBtn.href = file.url;
+        viewBtn.target = '_blank';
+        viewBtn.className = 'btn btn-outline-primary';
+        viewBtn.title = 'View';
+        viewBtn.innerHTML = '<i class="fas fa-eye me-1"></i> View';
+        
+        fileActions.appendChild(viewBtn);
+        
+        // Assemble the file item
+        fileInfo.appendChild(fileHeader);
+        fileInfo.appendChild(fileMeta);
+        
+        fileItem.appendChild(fileInfo);
+        fileItem.appendChild(fileActions);
+        fileList.appendChild(fileItem);
+      });
+    }
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Helper function to get status badge class
+    function getStatusBadgeClass(status) {
+      const statusMap = {
+        'uploaded': 'bg-info',
+        'reviewed': 'bg-success',
+        'archived': 'bg-secondary',
+        'error': 'bg-danger'
+      };
+      return statusMap[status?.toLowerCase()] || 'bg-secondary';
+    }
+    
+    // Get appropriate icon class based on file type
+    function getFileIconClass(fileType) {
+      const type = (fileType || '').toLowerCase();
+      if (type.includes('pdf')) return 'fas fa-file-pdf text-danger';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(type)) return 'fas fa-file-image text-primary';
+      if (['doc', 'docx'].includes(type)) return 'fas fa-file-word text-primary';
+      return 'fas fa-file';
+    }
+    
+    // Show alert message
+    function showAlert(message, type) {
+      const statusDiv = document.getElementById('uploadStatus');
+      statusDiv.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+    }
 
     uploadArea.addEventListener('click', () => fileInput.click());
 

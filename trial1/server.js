@@ -2,8 +2,16 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const multer = require('multer');
 // Load environment variables first
 require('dotenv').config();
+
+// Import Cloudinary configuration
+const { storage } = require('./config/cloudinary');
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -45,6 +53,10 @@ app.get('/view_appointments.html', (req, res) => {
 
 // Serve static files from the current directory
 app.use(express.static(__dirname));
+
+// File upload middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve login page as root
 app.get('/', (req, res) => {
@@ -287,6 +299,151 @@ app.post('/api/appointments', async (req, res) => {
   } catch (err) {
     console.error('Error creating appointment:', err);
     res.status(500).json({ error: 'Failed to create appointment' });
+  }
+});
+
+// File upload endpoint
+app.post('/api/files', upload.single('file'), async (req, res) => {
+  try {
+    console.log('File upload request received');
+    console.log('Request body:', req.body);
+    
+    const { patientEmail, doctorEmail, description } = req.body;
+    
+    if (!req.file) {
+      console.error('No file in request');
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Log the uploaded file details for debugging
+    console.log('Uploaded file info:', JSON.stringify(req.file, null, 2));
+
+    // Get the Cloudinary response
+    const cloudinaryResult = req.file;
+    
+    if (!cloudinaryResult || !cloudinaryResult.path) {
+      console.error('Cloudinary upload failed - missing path:', cloudinaryResult);
+      return res.status(500).json({ 
+        error: 'Failed to upload file to Cloudinary',
+        details: cloudinaryResult 
+      });
+    }
+
+    // Extract file extension from original filename
+    const fileExt = cloudinaryResult.originalname ? 
+                   cloudinaryResult.originalname.split('.').pop().toLowerCase() :
+                   'unknown';
+    
+    try {
+      // Create file record in database
+      const file = new File({
+        filename: cloudinaryResult.originalname || 'unnamed-file',
+        url: cloudinaryResult.path, // This should be the Cloudinary URL
+        public_id: cloudinaryResult.filename, // This is the public_id from Cloudinary
+        format: fileExt,
+        size: cloudinaryResult.size || 0,
+        patientEmail,
+        doctorEmail,
+        description: description || '',
+        status: 'uploaded',
+        uploadDate: new Date()
+      });
+
+      await file.save();
+      console.log('File saved to database:', file);
+      
+      // Format the response to match what the frontend expects
+      const responseFile = {
+        _id: file._id,
+        filename: file.filename,
+        url: file.url,
+        format: file.format,
+        size: file.size,
+        patientEmail: file.patientEmail,
+        doctorEmail: file.doctorEmail,
+        description: file.description,
+        status: file.status,
+        uploadDate: file.uploadDate,
+        __v: file.__v
+      };
+
+      res.status(201).json({ 
+        success: true, 
+        file: responseFile
+      });
+    } catch (dbError) {
+      console.error('Database save error:', dbError);
+      // If we get a duplicate key error, try to return a more helpful message
+      if (dbError.code === 11000) {
+        return res.status(400).json({
+          error: 'A file with this name already exists',
+          details: dbError.message
+        });
+      }
+      throw dbError;
+    }
+  } catch (err) {
+    console.error('Error in file upload:', err);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error uploading file',
+      message: err.message,
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+  }
+});
+
+// Get files for a doctor
+app.get('/api/files/doctor/:doctorEmail', async (req, res) => {
+  try {
+    const files = await File.find({ 
+      doctorEmail: req.params.doctorEmail 
+    }).sort({ uploadDate: -1 });
+    
+    res.json({ success: true, files });
+  } catch (err) {
+    console.error('Error fetching files:', err);
+    res.status(500).json({ error: 'Failed to fetch files' });
+  }
+});
+
+// Get files for a patient
+app.get('/api/files/patient/:patientEmail', async (req, res) => {
+  try {
+    const files = await File.find({ 
+      patientEmail: req.params.patientEmail 
+    }).sort({ uploadDate: -1 });
+    
+    res.json({ success: true, files });
+  } catch (err) {
+    console.error('Error fetching patient files:', err);
+    res.status(500).json({ error: 'Failed to fetch patient files' });
+  }
+});
+
+// Update file status
+app.patch('/api/files/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+    
+    const file = await File.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    res.json({ success: true, file });
+  } catch (err) {
+    console.error('Error updating file status:', err);
+    res.status(500).json({ error: 'Failed to update file status' });
   }
 });
 

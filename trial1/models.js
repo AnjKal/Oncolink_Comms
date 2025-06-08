@@ -41,15 +41,21 @@ const userSchema = new mongoose.Schema({
 
 // File schema for patient-doctor file sharing
 const fileSchema = new mongoose.Schema({
+  filename: { type: String, required: true },
+  url: { type: String, required: true },
+  public_id: { type: String, required: true },
+  format: { type: String, required: true },
+  size: { type: Number, required: true },
   patientEmail: { type: String, required: true },
   doctorEmail: { type: String, required: true },
-  filename: { type: String, required: true },
-  fileData: { type: Buffer, required: true },
-  fileType: { type: String, required: true },
-  size: { type: Number, required: true },
-  uploadDate: { type: Date, default: Date.now },
-  status: { type: String, enum: ['uploaded', 'reviewed', 'archived'], default: 'uploaded' }
-});
+  description: { type: String },
+  status: { 
+    type: String, 
+    enum: ['uploaded', 'reviewed', 'archived'], 
+    default: 'uploaded' 
+  },
+  uploadDate: { type: Date, default: Date.now }
+}, { timestamps: true });
 
 // Appointment schema
 const appointmentSchema = new mongoose.Schema({

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Files - Doctor Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+    .file-card {
+      transition: transform 0.2s;
+    }
+    .file-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .file-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .file-actions {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="#">Doctor Dashboard</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="doctor_dashboard.html">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="view_files.html">Patient Files</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="view_queries.html">Queries</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="view_appointments.html">Appointments</a>
+          </li>
+        </ul>
+        <button class="btn btn-outline-light" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Patient Files</h2>
+      <div class="btn-group">
+        <button class="btn btn-outline-secondary" id="filterAll">All</button>
+        <button class="btn btn-outline-secondary" id="filterUploaded">New</button>
+        <button class="btn btn-outline-secondary" id="filterReviewed">Reviewed</button>
+      </div>
+    </div>
+
+    <div class="row" id="filesContainer">
+      <!-- Files will be loaded here -->
+      <div class="col-12 text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading files...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Status Modal -->
+  <div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Update File Status</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <select class="form-select" id="statusSelect">
+            <option value="uploaded">New (Uploaded)</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveStatusBtn">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Check if user is logged in and is a doctor
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || user.role !== 'doctor') {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Load files
+      loadFiles();
+
+      // Setup filter buttons
+      document.getElementById('filterAll').addEventListener('click', () => filterFiles('all'));
+      document.getElementById('filterUploaded').addEventListener('click', () => filterFiles('uploaded'));
+      document.getElementById('filterReviewed').addEventListener('click', () => filterFiles('reviewed'));
+    });
+
+    // Load files from the server
+    async function loadFiles() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const response = await fetch(`/api/files/doctor/${encodeURIComponent(user.email)}`);
+        const result = await response.json();
+        
+        if (response.ok) {
+          window.files = result.files || [];
+          renderFiles(window.files);
+        } else {
+          throw new Error(result.error || 'Failed to load files');
+        }
+      } catch (err) {
+        console.error('Error loading files:', err);
+        showAlert('Failed to load files. Please try again later.', 'danger');
+      }
+    }
+
+    // Render files in the UI
+    function renderFiles(files) {
+      const container = document.getElementById('filesContainer');
+      
+      if (files.length === 0) {
+        container.innerHTML = `
+          <div class="col-12 text-center my-5">
+            <i class="far fa-folder-open fa-4x text-muted mb-3"></i>
+            <p class="text-muted">No files found</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = files.map(file => `
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100 file-card">
+            <div class="card-body text-center">
+              <div class="file-icon text-primary">
+                ${getFileIcon(file.format)}
+              </div>
+              <h5 class="card-title">${file.filename}</h5>
+              <p class="card-text text-muted small">
+                From: ${file.patientEmail}<br>
+                ${formatDate(file.uploadDate)}
+                ${file.description ? `<br>${file.description}` : ''}
+              </p>
+              <div class="file-actions">
+                <a href="${file.url}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                  <i class="fas fa-eye"></i> View
+                </a>
+                <button class="btn btn-sm btn-outline-secondary" 
+                        onclick="showStatusModal('${file._id}', '${file.status}')">
+                  <i class="fas fa-tag"></i> Status
+                </button>
+                <span class="badge bg-${getStatusBadgeClass(file.status)} float-end">
+                  ${file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Filter files by status
+    function filterFiles(status) {
+      if (status === 'all') {
+        renderFiles(window.files);
+      } else {
+        const filtered = window.files.filter(file => file.status === status);
+        renderFiles(filtered);
+      }
+    }
+
+    // Show status update modal
+    function showStatusModal(fileId, currentStatus) {
+      const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+      const select = document.getElementById('statusSelect');
+      select.value = currentStatus;
+      
+      document.getElementById('saveStatusBtn').onclick = async () => {
+        try {
+          const response = await fetch(`/api/files/${fileId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: select.value })
+          });
+          
+          if (response.ok) {
+            // Update the file in the local array
+            const updatedFile = await response.json();
+            const index = window.files.findIndex(f => f._id === fileId);
+            if (index !== -1) {
+              window.files[index] = updatedFile;
+              renderFiles(window.files);
+            }
+            modal.hide();
+          } else {
+            throw new Error('Failed to update status');
+          }
+        } catch (err) {
+          console.error('Error updating status:', err);
+          alert('Failed to update status. Please try again.');
+        }
+      };
+      
+      modal.show();
+    }
+
+    // Helper functions
+    function getFileIcon(format) {
+      const type = (format || '').toLowerCase();
+      if (type.includes('pdf')) return '<i class="fas fa-file-pdf"></i>';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(type)) return '<i class="fas fa-file-image"></i>';
+      if (['doc', 'docx'].includes(type)) return '<i class="fas fa-file-word"></i>';
+      return '<i class="fas fa-file"></i>';
+    }
+
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'uploaded': return 'primary';
+        case 'reviewed': return 'success';
+        case 'archived': return 'secondary';
+        default: return 'light';
+      }
+    }
+
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    }
+
+    function showAlert(message, type) {
+      // You can implement a toast or alert system here
+      alert(`${type.toUpperCase()}: ${message}`);
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+
+    // Make functions available globally
+    window.showStatusModal = showStatusModal;
+  </script>
+</body>
+</html>
