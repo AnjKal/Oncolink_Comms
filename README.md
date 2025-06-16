@@ -1,5 +1,7 @@
 # Cancer Patient Support Chat Tool (CN Component)
-
+**Please go to this link: https://oncolink-comms.onrender.com**
+to login as a patient, enter one of the 2 credential: patient1@example.com, password: patient123 or patient2@example.com and patient456
+similarly for doctor: doctor1@example.com, password: doctor123 or doctor2@example.com and doctor456
 This tool is part of a larger project to predict the efficacy of drugs for cancer and to support patients by providing a safe, private space for communication and community building. The CN component focuses on real-time text and video chat for patients, helping them avoid isolation and interact with peers outside of mainstream media.
 
 ## Key Features and Advantages
