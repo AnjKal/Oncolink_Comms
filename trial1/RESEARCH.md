@@ -5,171 +5,68 @@
 The patient communication system is built on a modern web architecture that combines traditional request-response patterns with real-time communication capabilities. The system is implemented using Node.js with Express.js for the backend, Socket.IO for real-time features, and MongoDB Atlas for data persistence. The application is containerized and deployed on the Render platform, leveraging its cloud infrastructure for high availability and scalability.
 
 ### 1.1 Core Network Components
-- **Web Server**: Express.js application handling HTTP/HTTPS requests
-- **WebSocket Server**: Socket.IO server for real-time bidirectional communication
-- **Database**: MongoDB Atlas cluster with connection pooling and automatic failover
-- **File Storage**: Cloudinary service for secure file storage and delivery
-- **CDN**: Content Delivery Network for static assets and media files
+
+The system's network infrastructure is built around several key components. The web server is implemented using Express.js, which handles all HTTP/HTTPS requests and serves as the foundation for the RESTful API. For real-time bidirectional communication, a WebSocket server powered by Socket.IO is integrated, enabling instant data exchange between clients and the server. Data persistence is managed through a MongoDB Atlas cluster, which provides connection pooling and automatic failover capabilities. For file storage and delivery, the system utilizes Cloudinary's service, which offers secure and scalable cloud storage. Additionally, a Content Delivery Network (CDN) is employed to efficiently serve static assets and media files, reducing latency for end users.
 
 ### 1.2 Network Architecture
 
-[IMAGE NEEDED: System Architecture Diagram showing:]
-- Client applications (web browsers)
-- Load balancer (handled by Render)
-- Application servers (Node.js/Express)
-- WebSocket server (Socket.IO)
-- MongoDB Atlas cluster
-- Cloudinary service
-- CDN for static assets
+[IMAGE NEEDED: System Architecture Diagram]
 
-The architecture follows a three-tier model:
-1. **Presentation Layer**: HTML/CSS/JavaScript frontend
-2. **Application Layer**: Node.js/Express server with WebSocket support
-3. **Data Layer**: MongoDB Atlas with Cloudinary integration
+The system's network architecture is designed as a three-tier model to ensure clear separation of concerns and optimal performance. At the presentation layer, client applications run in web browsers, providing the user interface and handling user interactions. The application layer consists of Node.js/Express servers that process business logic and manage WebSocket connections for real-time features. These servers are load balanced by Render's infrastructure to ensure high availability and scalability.
+
+The data layer is composed of a MongoDB Atlas cluster that handles all persistent data storage. For file storage and delivery, the system integrates with Cloudinary's service, which provides optimized media handling and delivery through its global CDN. Static assets such as JavaScript, CSS, and images are also served through a CDN to minimize load times for users worldwide.
+
+Client applications communicate with the backend through HTTPS for traditional RESTful API calls and WebSockets for real-time updates. The WebSocket server maintains persistent connections with clients, enabling instant message delivery and real-time collaboration features. This architecture ensures that the system can handle both the request-response nature of traditional web applications and the event-driven requirements of real-time communication.
 
 ## 2. System Architecture
 
 ### 2.1 Overall Architecture
-[IMAGE NEEDED: System Architecture Diagram showing:]
-- Client-side components (web browsers, mobile devices)
-- Load balancer
-- Application servers
-- WebSocket server
-- MongoDB Atlas cluster
-- Cloudinary service for file storage
-- CDN for static assets
+[IMAGE NEEDED: System Architecture Diagram]
 
-The system follows a three-tier architecture:
-1. **Presentation Layer**: HTML/CSS/JavaScript frontend
-2. **Application Layer**: Node.js/Express.js server with WebSocket support
-3. **Data Layer**: MongoDB Atlas with Cloudinary for file storage
-
-### 2.2 Network Topology
-The system implements a star topology with the following components:
-- Centralized Express.js server handling HTTP/HTTPS requests
-- WebSocket server for real-time communication
-- MongoDB Atlas for data persistence
-- Cloudinary for file storage and delivery
-- Render platform for hosting and deployment
+The system's architecture is designed as a three-tier model that clearly separates concerns and optimizes performance. At the presentation layer, client-side components including web browsers and mobile devices provide the user interface and handle user interactions. These clients communicate with the application layer, which consists of Node.js/Express.js servers that process business logic and manage WebSocket connections for real-time features. The data layer is composed of a MongoDB Atlas cluster for structured data storage and Cloudinary for file storage and delivery. A Content Delivery Network (CDN) is utilized to efficiently serve static assets, while Render's load balancer distributes incoming traffic across multiple application server instances for high availability and scalability.
 
 ## 3. Communication Protocols & APIs
 
 ### 3.1 HTTP/HTTPS Implementation
-The system utilizes HTTPS for secure data transmission with the following characteristics:
-- All API endpoints are served over HTTPS
-- JSON as the primary data interchange format
-- Standard HTTP methods (GET, POST, PUT, DELETE) for RESTful operations
-- JWT-based authentication for secure API access
+The system's HTTP/HTTPS implementation ensures secure data transmission through several key features. All API endpoints are exclusively served over HTTPS, encrypting all data in transit using TLS 1.2 or higher. The primary data interchange format is JSON, chosen for its lightweight nature and widespread support across programming languages. The API adheres to RESTful principles, utilizing standard HTTP methods: GET for retrieving resources, POST for creating new resources, PUT for updating existing resources, and DELETE for removing resources. Authentication is implemented using JSON Web Tokens (JWT), which are included in the Authorization header of each request to verify the user's identity and permissions.
 
 ### 3.2 WebSocket Implementation
-Real-time features are implemented using Socket.IO, which provides:
-- Bi-directional, event-based communication
-- Automatic reconnection and fallback mechanisms
-- Room-based messaging for private communications
-- Presence detection for online/offline status
+Real-time communication is facilitated through Socket.IO, which provides a robust implementation of WebSockets with automatic fallback options. The implementation supports bi-directional, event-based communication, allowing both the server and clients to emit and listen for events. Socket.IO's automatic reconnection mechanism ensures that temporary network issues don't disrupt the user experience, with intelligent fallback to HTTP long-polling when WebSocket connections aren't available. The system leverages room-based messaging to create isolated communication channels for private conversations, while presence detection features track user availability status across the platform.
 
 ### 3.3 API Endpoints
-Key RESTful endpoints include:
-- `/api/login` - User authentication
-- `/api/appointments` - Appointment management
-- `/api/files` - File upload/download
-- `/api/queries` - Patient queries handling
+The system exposes several key RESTful endpoints that form the core of its functionality. The `/api/login` endpoint handles user authentication, validating credentials and returning a JWT for subsequent authenticated requests. Appointment management is handled through the `/api/appointments` endpoint, supporting the creation, retrieval, updating, and deletion of appointment records. File operations, including uploads and downloads, are processed via the `/api/files` endpoint, which integrates with Cloudinary for secure file storage. Patient queries are managed through the `/api/queries` endpoint, enabling the submission and tracking of patient inquiries and support requests.
 
-## 4. Real-time Communication
+## 4. Real-time Communication Implementation
 
-### 4.1 WebRTC Implementation
-Video calling is implemented using WebRTC with the following components:
-- **Signaling**: Custom WebSocket-based signaling server
-- **NAT Traversal**:
-  - STUN server for basic NAT traversal
-  - TURN server for restrictive NATs (not yet implemented)
-- **Media Handling**:
-  - Audio/Video streams using `getUserMedia`
-  - Peer-to-peer data channels
-  - Bandwidth adaptation
+### 4.1 WebRTC for Video Calls
+The system implements WebRTC (Web Real-Time Communication) to enable high-quality, low-latency peer-to-peer video communication. The implementation includes integration with STUN (Session Traversal Utilities for NAT) and TURN (Traversal Using Relays around NAT) servers to facilitate NAT traversal, allowing video calls to work across different network configurations. The media stream handling component captures and processes audio and video streams from users' devices, applying necessary encoding and decoding. Connection state management ensures that the system can detect and respond to changes in connection quality or status. Bandwidth adaptation is implemented to dynamically adjust video quality based on available network conditions, ensuring smooth communication even with varying connection speeds.
 
-### 4.2 Socket.IO Architecture
-- **Server-Side**:
-  - Single Socket.IO instance attached to HTTP server
-  - Namespace for different features (chat, video, presence)
-  - In-memory store for active connections
-- **Client-Side**:
-  - Automatic reconnection with exponential backoff
-  - Room-based messaging
-  - Binary data support for file transfers
+### 4.2 Socket.IO for Real-time Updates
+Socket.IO serves as the backbone for the system's real-time features, providing a reliable and efficient communication channel between clients and servers. The event-based communication model allows for flexible message passing, where both clients and servers can emit and listen for custom events. Room-based messaging enables the creation of isolated communication channels, which is particularly useful for private conversations or specific user groups. The automatic reconnection feature ensures that temporary network issues don't disrupt the user experience, with the system automatically attempting to re-establish dropped connections. Support for binary data transfer allows for efficient transmission of files or other binary content through the WebSocket connection, complementing the traditional HTTP-based file upload mechanism.
 
-### 4.3 Message Flow
-1. **Connection Establishment**:
-   ```
-   Client -> Server: HTTP Upgrade to WebSocket
-   Server -> Client: Connection Acknowledgment
-   ```
-2. **Authentication**:
-   ```
-   Client -> Server: Authenticate with JWT
-   Server -> Client: Authentication Result
-   ```
-3. **Real-time Events**:
-   ```
-   Client A -> Server: Emit event (e.g., 'chat-message')
-   Server -> Client B: Broadcast event to room
-   ```
+## 5. Security Implementation
 
-## 5. Real-time Communication Implementation
+### 5.1 Network Security
+The system implements multiple layers of network security to protect against various threats. All communications are encrypted using HTTPS with TLS 1.2 or higher, ensuring that data in transit remains confidential and tamper-proof. Cross-Origin Resource Sharing (CORS) is carefully configured to control which domains can access the API, preventing unauthorized cross-site requests. Rate limiting is implemented at the API gateway level to protect against brute force attacks and denial-of-service attempts, with configurable thresholds based on endpoint sensitivity. Input validation and sanitization are applied to all user-supplied data to prevent injection attacks, with strict type checking and validation rules enforced at both the client and server sides.
 
-### 5.1 WebRTC for Video Calls
-The system implements WebRTC for peer-to-peer video communication with:
-- STUN/TURN server integration for NAT traversal
-- Media stream handling
-- Connection state management
-- Bandwidth adaptation
+### 5.2 Authentication & Authorization
+The authentication system is built around JSON Web Tokens (JWT), providing a stateless mechanism for verifying user identity. JWTs are signed using a secure secret key and include user claims that encode the user's identity and roles. Role-based access control (RBAC) is implemented to enforce fine-grained permissions, with different access levels defined for patients, healthcare providers, and administrators. Session management includes features like token expiration and automatic session timeout to reduce the risk of unauthorized access. A token refresh mechanism allows users to obtain new access tokens without requiring them to log in again, improving the user experience while maintaining security.
 
-### 5.2 Socket.IO for Real-time Updates
-Real-time features are powered by Socket.IO, providing:
-- Event-based communication
-- Room-based messaging
-- Automatic reconnection
-- Binary data transfer support
+## 6. Deployment on Render
 
-## 6. Security Implementation
+### 6.1 Infrastructure
+The system is deployed on the Render platform using containerized deployment with Docker, ensuring consistent behavior across different environments. Environment-based configuration allows for seamless transitions between development, staging, and production environments, with sensitive configuration values stored securely as environment variables. The platform's automatic scaling capabilities enable the system to handle varying loads by dynamically adjusting the number of running instances based on demand. Built-in monitoring and logging provide visibility into the system's performance and health, with metrics and logs available through Render's dashboard. This infrastructure is designed to be both robust and flexible, supporting the application's requirements for availability and performance.
 
-### 6.1 Network Security
-- HTTPS with TLS 1.2+ for all communications
-- CORS configuration for controlled cross-origin access
-- Rate limiting for API endpoints
-- Input validation and sanitization
+### 6.2 Network Configuration
+The deployment includes comprehensive network configuration to ensure security and performance. A custom domain is configured with automatic SSL/TLS certificate provisioning through Let's Encrypt, providing secure HTTPS connections for all client communications. HTTP/2 support is enabled to improve page load times and reduce latency through features like header compression and request multiplexing. Static assets are served through a global Content Delivery Network (CDN), which caches content at edge locations worldwide to minimize latency for users regardless of their geographic location. The infrastructure is protected against Distributed Denial of Service (DDoS) attacks through Render's built-in protection mechanisms, which include rate limiting and traffic filtering to ensure service availability even under attack.
 
-### 6.2 Authentication & Authorization
-- JWT-based stateless authentication
-- Role-based access control (RBAC)
-- Session management
-- Token refresh mechanism
+## 7. Performance Analysis
 
-## 7. Deployment on Render
+### 7.1 Latency Considerations
+The system is designed with performance as a key consideration, with specific attention to minimizing latency at every level. The average API response time is maintained below 200 milliseconds for the 95th percentile, ensuring snappy user interactions. WebSocket message delivery is optimized for real-time communication, with a target latency of under 50 milliseconds for message propagation between users in the same region. Video call setup time is kept under 1 second through efficient signaling and WebRTC connection establishment. These performance targets are achieved through various optimizations, including connection pooling, efficient database queries, and the use of WebSockets for real-time updates.
 
-### 7.1 Infrastructure
-- Containerized deployment using Docker
-- Environment-based configuration
-- Automatic scaling capabilities
-- Built-in monitoring and logging
-
-### 7.2 Network Configuration
-- Custom domain with SSL/TLS
-- HTTP/2 support
-- Global CDN for static assets
-- DDoS protection
-
-## 8. Performance Analysis
-
-### 8.1 Latency Considerations
-- Average API response time: < 200ms
-- WebSocket message delivery: < 50ms
-- Video call setup time: < 1s
-
-### 8.2 Scalability
-- Horizontal scaling support
-- Database read replicas for read-heavy operations
-- Caching layer for frequently accessed data
+### 7.2 Scalability
+The architecture is designed to scale horizontally to accommodate growing numbers of users and increasing data volumes. The stateless nature of the application servers allows for easy addition of more instances behind the load balancer as demand increases. For read-heavy operations, the system can leverage database read replicas to distribute query load and improve response times. A multi-layered caching strategy is implemented, with in-memory caches for frequently accessed data and CDN caching for static assets. This approach ensures that the system can scale to support thousands of concurrent users while maintaining responsive performance and high availability.
 
 ## 9. Technical Specifications
 
